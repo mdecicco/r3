@@ -23,9 +23,11 @@ namespace r3 {
         return m_doShutdown;
     }
 
-    void Engine::execute() {
+    i32 Engine::execute() {
         while (!m_doShutdown) {
             m_doShutdown = true;
         }
+
+        return 0;
     }
 };

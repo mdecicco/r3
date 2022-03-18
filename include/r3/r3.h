@@ -15,7 +15,7 @@ namespace r3 {
 
             /* Runtime */
             bool shouldClose() const;
-            void execute();
+            i32 execute();
 
         protected:
             engine_config m_cfg;
