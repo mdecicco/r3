@@ -1,0 +1,3 @@
+[submodule "deps/gjs"]
+	path = deps/gjs
+	url = https://github.com/mdecicco/gjs.git
