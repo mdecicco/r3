@@ -1,0 +1,7 @@
+project(playgrounds)
+add_subdirectory(fixed_allocator)
+add_subdirectory(paged_allocator)
+add_subdirectory(array)
+add_subdirectory(arguments)
+add_subdirectory(db)
+add_subdirectory(ecs)

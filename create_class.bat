@@ -30,5 +30,6 @@ set printf="C:\Program Files\Git\usr\bin\printf.exe"
 
 %printf% "#include <r3/%dir_name%/%header_name%>\n\nnamespace r3 {\n};" >> %src_name%
 
+cd ../..
 copy /b CMakeLists.txt +,,
 pause
