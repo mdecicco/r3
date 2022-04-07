@@ -11,7 +11,7 @@
 
 using namespace r3;
 
-class TestSys : public ecs::ISystem<model::RawNameComponent> {
+class TestSys : public ecs::ISystem<model::NameComponentModel::Instance> {
     public:
         TestSys() {
             setUpdateInterval(0.0f);
@@ -50,7 +50,7 @@ class App : public IApplication {
             Engine::Get()->addUpdateSubscriber(m_test);
         }
 
-        virtual void onSceneLoaded(const model::RawScene& scene) {
+        virtual void onSceneLoaded(const model::SceneModel::Instance& scene) {
             auto e = ecs::createEntity();
             e.addNameComponent();
             e.getName()->name = String::Format("Entity %d", e.getId());
@@ -58,7 +58,7 @@ class App : public IApplication {
         }
 
         virtual void onCreate(db::Database* freshDb) {
-            model::RawScene entryScene = {
+            model::SceneModel::Instance entryScene = {
                 0,
                 "test",
                 true,
