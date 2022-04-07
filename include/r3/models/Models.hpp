@@ -146,7 +146,7 @@ namespace r3 {
 
         template <typename RawModel, FixedString tableName, typename F>
         template<typename M>
-        static std::enable_if_t<std::is_same_v<M, RawModel> && (std::is_same_v<RawEntity, M> || std::is_base_of_v<RawComponentBase, M>), SceneStorage<M>*>
+        static std::enable_if_t<std::is_same_v<M, RawModel> && (std::is_same_v<mEntity, M> || std::is_base_of_v<mComponentBase, M>), SceneStorage<M>*>
         ModelBase<RawModel, tableName, F>::Storage() {
             return Singleton<SceneStorage<M>>::Get();
         }
@@ -167,7 +167,7 @@ namespace r3 {
                 initModel(m);
                 m->finalize();
 
-                if constexpr (std::is_same_v<RawModel, RawEntity>) {
+                if constexpr (std::is_same_v<RawModel, mEntity>) {
                     db::ForeignKeyField* fk = (db::ForeignKeyField*)((F*)this)->sceneId.getField();
                     Singleton<SceneStorage<RawModel>>::Create(m, fk);
                 } else if constexpr(is_entity_component<RawModel>::value) {
@@ -179,7 +179,7 @@ namespace r3 {
                         db::ForeignKeyField* fk = (db::ForeignKeyField*)f;
                         if (r3::String("tblEntity") != fk->getReference()->getTableName()) continue;
                         // Just to be sure...
-                        if (fk->getOffset() != offsetof(RawComponentBase, entityId)) continue;
+                        if (fk->getOffset() != offsetof(mComponentBase, entityId)) continue;
                         entityFk = fk;
                         break;
                     }

@@ -5,14 +5,14 @@ namespace r3 {
         template <typename Cls>
         class ModelAccessor;
 
-        struct RawEntity;
-        struct RawTransformComponent;
-        struct RawNameComponent;
+        struct mEntity;
+        struct mTransformComponent;
+        struct mNameComponent;
     };
 
     namespace ecs {
-        typedef model::ModelAccessor<model::RawEntity> aEntity;
-        typedef model::ModelAccessor<model::RawTransformComponent> aTransformComponent;
-        typedef model::ModelAccessor<model::RawNameComponent> aNameComponent;
+        typedef model::ModelAccessor<model::mEntity> aEntity;
+        typedef model::ModelAccessor<model::mTransformComponent> aTransformComponent;
+        typedef model::ModelAccessor<model::mNameComponent> aNameComponent;
     };
 };

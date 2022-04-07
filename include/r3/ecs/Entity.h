@@ -18,7 +18,7 @@ namespace r3 {
                 model::SceneId getSceneId() const;
                 Entity getParent();
                 Array<Entity> getChildren();
-                model::RawEntity getRaw() const;
+                model::EntityModel::Instance getRaw() const;
 
                 aTransformComponent addTransformComponent();
                 aTransformComponent getTransform() const;

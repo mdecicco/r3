@@ -11,7 +11,7 @@ namespace r3 {
 
     void IApplication::afterInitialize() { }
 
-    void IApplication::onSceneLoaded(const model::RawScene& scene) { }
+    void IApplication::onSceneLoaded(const model::SceneModel::Instance& scene) { }
 
     void IApplication::onCreate(db::Database* freshDb) { }
 

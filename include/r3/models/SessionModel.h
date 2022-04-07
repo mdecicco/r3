@@ -4,7 +4,7 @@
 
 namespace r3 {
     namespace model {
-        struct RawSession {
+        struct mSession {
             u32 id;
             Datetime startedOn;
 
@@ -12,11 +12,11 @@ namespace r3 {
             Datetime endedOn;
         };
 
-        class SessionModel : public ModelBase<RawSession, "tblSession", SessionModel> {
+        class SessionModel : public ModelBase<mSession, "tblSession", SessionModel> {
             public:
-                PrimaryKey<"id", &RawSession::id> id;
-                Datetime<"started_on", &RawSession::startedOn> startedOn;
-                Datetime<"ended_on", &RawSession::endedOn> endedOn;
+                PrimaryKey<"id", &Instance::id> id;
+                Datetime<"started_on", &Instance::startedOn> startedOn;
+                Datetime<"ended_on", &Instance::endedOn> endedOn;
         };
     };
 };

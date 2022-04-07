@@ -37,7 +37,7 @@ namespace r3 {
             // Called every time a scene's data has been loaded from the database. Any
             // entities created on or after a scene is loaded will be assigned to the
             // current scene unless explicitly reassigned after creation.
-            virtual void onSceneLoaded(const model::RawScene& scene);
+            virtual void onSceneLoaded(const model::SceneModel::Instance& scene);
 
             // Called when the engine has been run for the first time with any database
             // after initialization, but before 'afterInitialize' is called.

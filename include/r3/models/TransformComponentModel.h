@@ -5,7 +5,7 @@
 
 namespace r3 {
     namespace model {
-        struct RawTransformComponent : RawComponentBase {
+        struct mTransformComponent : mComponentBase {
             i32 cellIdx;
 
             vec3 position;
@@ -13,31 +13,28 @@ namespace r3 {
             quat rotation;
         };
 
-        class TransformComponentModel : public ModelBase<RawTransformComponent, "tblTransformComponent", TransformComponentModel> {
+        class TransformComponentModel : public ModelBase<mTransformComponent, "tblTransformComponent", TransformComponentModel> {
             public:
-                using Raw = RawTransformComponent;
-                using Self = TransformComponentModel;
-
-                ForeignKey<"entity_id", &Raw::entityId, &EntityModel::id, false, true> entityId;
-                Integer<"cell_idx", &Raw::cellIdx, false, false, "cell_idx > 0 OR cell_idx = -1"> cellIdx;
+                ForeignKey<"entity_id", &Instance::entityId, &EntityModel::id, false, true> entityId;
+                Integer<"cell_idx", &Instance::cellIdx, false, false, "cell_idx > 0 OR cell_idx = -1"> cellIdx;
 
                 struct {
-                    Float<"pos_x", offsetof(Raw, position) + 0> x;
-                    Float<"pos_y", offsetof(Raw, position) + 4> y;
-                    Float<"pos_z", offsetof(Raw, position) + 8> z;
+                    Float<"pos_x", offsetof(Instance, position) + 0> x;
+                    Float<"pos_y", offsetof(Instance, position) + 4> y;
+                    Float<"pos_z", offsetof(Instance, position) + 8> z;
                 } pos;
 
                 struct {
-                    Float<"scale_x", offsetof(Raw, scale) + 0> x;
-                    Float<"scale_y", offsetof(Raw, scale) + 4> y;
-                    Float<"scale_z", offsetof(Raw, scale) + 8> z;
+                    Float<"scale_x", offsetof(Instance, scale) + 0> x;
+                    Float<"scale_y", offsetof(Instance, scale) + 4> y;
+                    Float<"scale_z", offsetof(Instance, scale) + 8> z;
                 } scale;
 
                 struct {
-                    Float<"rot_x", offsetof(Raw, rotation) + 0> x;
-                    Float<"rot_y", offsetof(Raw, rotation) + 4> y;
-                    Float<"rot_z", offsetof(Raw, rotation) + 8> z;
-                    Float<"rot_w", offsetof(Raw, rotation) + 12> w;
+                    Float<"rot_x", offsetof(Instance, rotation) + 0> x;
+                    Float<"rot_y", offsetof(Instance, rotation) + 4> y;
+                    Float<"rot_z", offsetof(Instance, rotation) + 8> z;
+                    Float<"rot_w", offsetof(Instance, rotation) + 12> w;
                 } rot;
         };
     };

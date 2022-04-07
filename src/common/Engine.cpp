@@ -189,7 +189,7 @@ namespace r3 {
         return &m_cfg;
     }
 
-    model::RawSession sEngine::getSessionInfo() const {
+    model::SessionModel::Instance sEngine::getSessionInfo() const {
         return m_currentSession;
     }
 

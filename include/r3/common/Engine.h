@@ -28,7 +28,7 @@ namespace r3 {
 
             /* Accessors */
             const engine_config* getCfg() const;
-            model::RawSession getSessionInfo() const;
+            model::SessionModel::Instance getSessionInfo() const;
             Arguments* getArgs();
             db::Database* getDb();
 
@@ -61,7 +61,7 @@ namespace r3 {
             gjs::backend* m_scriptBackend;
             IApplication* m_app;
 
-            model::RawSession m_currentSession;
+            model::SessionModel::Instance m_currentSession;
     };
 
     typedef Singleton<sEngine> Engine;

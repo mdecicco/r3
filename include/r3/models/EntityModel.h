@@ -6,20 +6,20 @@
 namespace r3 {
     namespace model {
         typedef u32 EntityId;
-        struct RawEntity {
+        struct mEntity {
             EntityId id;
             EntityId parentId;
             SceneId sceneId;
         };
 
-        class EntityModel : public ModelBase<RawEntity, "tblEntity", EntityModel> {
+        class EntityModel : public ModelBase<mEntity, "tblEntity", EntityModel> {
             public:
-                PrimaryKey<"id", &RawEntity::id> id;
-                ForeignKey<"parent_id", &RawEntity::parentId, &EntityModel::id, true, false, "parent_id != id"> parentId;
-                ForeignKey<"scene_id", &RawEntity::sceneId, &SceneModel::id> sceneId;
+                PrimaryKey<"id", &Instance::id> id;
+                ForeignKey<"parent_id", &Instance::parentId, &EntityModel::id, true, false, "parent_id != id"> parentId;
+                ForeignKey<"scene_id", &Instance::sceneId, &SceneModel::id> sceneId;
         };
 
-        struct RawComponentBase {
+        struct mComponentBase {
             EntityId entityId;
         };
 
@@ -27,6 +27,6 @@ namespace r3 {
         struct is_entity_component : std::false_type { };
 
         template <typename T>
-        struct is_entity_component<T> : std::is_base_of<RawComponentBase, T> { };
+        struct is_entity_component<T> : std::is_base_of<mComponentBase, T> { };
     };
 };

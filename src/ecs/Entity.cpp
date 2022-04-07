@@ -85,7 +85,7 @@ namespace r3 {
             return getEntityChildren(m_self->id);
         }
 
-        model::RawEntity Entity::getRaw() const {
+        model::EntityModel::Instance Entity::getRaw() const {
             return *m_self;
         }
 
@@ -95,7 +95,7 @@ namespace r3 {
             auto tc = tcs->getModelForEntity(m_self->id);
             if (tc) return tc;
 
-            model::RawTransformComponent _tc;
+            model::TransformComponentModel::Instance _tc;
             _tc.entityId = m_self->id;
             _tc.cellIdx = 0;
             _tc.position = _tc.scale = vec3(0, 0, 0);
@@ -114,7 +114,7 @@ namespace r3 {
             auto nc = ncs->getModelForEntity(m_self->id);
             if (nc) return nc;
 
-            model::RawNameComponent _nc;
+            model::NameComponentModel::Instance _nc;
             _nc.entityId = m_self->id;
             _nc.name = "";
             return ncs->submit(_nc);

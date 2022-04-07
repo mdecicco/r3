@@ -55,7 +55,7 @@ namespace r3 {
                 ~SceneStorage();
 
                 model::SceneId getSceneId() const;
-                model::RawScene getScene() const;
+                model::SceneModel::Instance getScene() const;
 
                 const Array<ModelAccessor<Cls>>& getData() const;
                 Array<ModelAccessor<Cls>>& getData();
@@ -76,7 +76,7 @@ namespace r3 {
             protected:
                 friend class ModelAccessor<Cls>;
 
-                model::RawScene m_scene;
+                model::SceneModel::Instance m_scene;
                 db::Model<Cls>* m_model;
                 db::ForeignKeyField* m_sceneOrEntityFK;
                 Array<ModelAccessor<Cls>> m_cachedAccessors;

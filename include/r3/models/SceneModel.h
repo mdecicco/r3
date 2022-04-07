@@ -7,7 +7,7 @@ namespace r3 {
         typedef u32 SceneId;
         typedef u32 SceneCellId;
 
-        struct RawScene {
+        struct mScene {
             SceneId id;
             String name;
             bool isEntryPoint;
@@ -25,25 +25,25 @@ namespace r3 {
             } divs;
         };
 
-        class SceneModel : public model::ModelBase<RawScene, "tblScene", SceneModel> {
+        class SceneModel : public model::ModelBase<mScene, "tblScene", SceneModel> {
             public:
-                PrimaryKey<"id", &RawScene::id> id;
-                String<"name", &RawScene::name, 64> name;
-                Boolean<"is_entry_point", &RawScene::isEntryPoint> isEntryPoint;
+                PrimaryKey<"id", &Instance::id> id;
+                String<"name", &Instance::name, 64> name;
+                Boolean<"is_entry_point", &Instance::isEntryPoint> isEntryPoint;
 
                 struct {
-                    Integer<"width", offsetof(RawScene, dims) + offsetof(RawScene::_dims, width)> width;
-                    Integer<"height", offsetof(RawScene, dims) + offsetof(RawScene::_dims, height)> height;
-                    Integer<"length", offsetof(RawScene, dims) + offsetof(RawScene::_dims, length)> length;
+                    Integer<"width", offsetof(Instance, dims) + offsetof(Instance::_dims, width)> width;
+                    Integer<"height", offsetof(Instance, dims) + offsetof(Instance::_dims, height)> height;
+                    Integer<"length", offsetof(Instance, dims) + offsetof(Instance::_dims, length)> length;
                 } dims;
 
                 struct {
-                    Integer<"width_divs", offsetof(RawScene, divs) + offsetof(RawScene::_divs, width)> width;
-                    Integer<"height_divs", offsetof(RawScene, divs) + offsetof(RawScene::_divs, height)> height;
-                    Integer<"length_divs", offsetof(RawScene, divs) + offsetof(RawScene::_divs, length)> length;
+                    Integer<"width_divs", offsetof(Instance, divs) + offsetof(Instance::_divs, width)> width;
+                    Integer<"height_divs", offsetof(Instance, divs) + offsetof(Instance::_divs, height)> height;
+                    Integer<"length_divs", offsetof(Instance, divs) + offsetof(Instance::_divs, length)> length;
                 } divs;
 
-                virtual void initModel(db::Model<RawScene>* self);
+                virtual void initModel(db::Model<Instance>* self);
         };
     };
 };

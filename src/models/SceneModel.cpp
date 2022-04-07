@@ -4,7 +4,7 @@
 
 namespace r3 {
     namespace model {
-        void SceneModel::initModel(db::Model<RawScene>* m) {
+        void SceneModel::initModel(db::Model<Instance>* m) {
             m->RunOnInit(""
                 "CREATE TRIGGER IF NOT EXISTS tblScene_insert_one_entry\n"
                 "BEFORE INSERT ON tblScene FOR EACH ROW\n"

@@ -9,8 +9,8 @@ namespace r3 {
         // https://www.youtube.com/watch?v=fnWqcJJxDOA
 
         typedef u32 SceneId;
-        struct RawEntity;
-        struct RawComponentBase;
+        struct mEntity;
+        struct mComponentBase;
 
         // FixedString template struct thanks to 'user'
         // https://stackoverflow.com/a/59495681
@@ -118,6 +118,8 @@ namespace r3 {
         template <typename RawModel, FixedString tableName, typename F>
         class ModelBase : public PlainModelBase, public db::Model<RawModel> {
             public:
+                using Instance = RawModel;
+
                 // Please forgive me
                 template                                              <FixedString fieldName, auto FieldPtr>
                 struct PrimaryKey : fPrimaryKey<RawModel, F, tableName,            fieldName,      FieldPtr> {};
@@ -143,7 +145,7 @@ namespace r3 {
                 static db::Model<RawModel>* Get();
 
                 template<typename M = RawModel>
-                static std::enable_if_t<std::is_same_v<M, RawModel> && (std::is_same_v<RawEntity, M> || std::is_base_of_v<RawComponentBase, M>), SceneStorage<M>*> Storage();
+                static std::enable_if_t<std::is_same_v<M, RawModel> && (std::is_same_v<mEntity, M> || std::is_base_of_v<mComponentBase, M>), SceneStorage<M>*> Storage();
 
                 virtual void initModel(db::Model<RawModel>* self);
                 virtual void destroy();

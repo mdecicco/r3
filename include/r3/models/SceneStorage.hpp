@@ -108,7 +108,7 @@ namespace r3 {
         }
 
         template <typename Cls>
-        model::RawScene SceneStorage<Cls>::getScene() const {
+        model::SceneModel::Instance SceneStorage<Cls>::getScene() const {
             return m_scene;
         }
 
@@ -138,7 +138,7 @@ namespace r3 {
             m_isValid = true;
 
             db::Database* Db = Engine::Get()->getDb();
-            Array<model::RawScene> results;
+            Array<model::SceneModel::Instance> results;
         
             if (sceneId) {
                 results = Db->select(model::SceneModel::Get(), String::Format("id = %d", sceneId));

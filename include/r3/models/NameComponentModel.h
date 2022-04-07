@@ -4,17 +4,14 @@
 
 namespace r3 {
     namespace model {
-        struct RawNameComponent : RawComponentBase {
+        struct mNameComponent : mComponentBase {
             String name;
         };
 
-        class NameComponentModel : public ModelBase<RawNameComponent, "tblNameComponent", NameComponentModel> {
+        class NameComponentModel : public ModelBase<mNameComponent, "tblNameComponent", NameComponentModel> {
             public:
-                using Raw = RawNameComponent;
-                using Self = NameComponentModel;
-
-                ForeignKey<"entity_id", &Raw::entityId, &EntityModel::id, false, true> entityId;
-                String<"name", &Raw::name, 64> name;
+                ForeignKey<"entity_id", &Instance::entityId, &EntityModel::id, false, true> entityId;
+                String<"name", &Instance::name, 64> name;
         };
     };
 };
