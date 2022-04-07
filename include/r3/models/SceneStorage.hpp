@@ -128,7 +128,7 @@ namespace r3 {
         }
 
         template <typename Cls>
-        void SceneStorage<Cls>::setSceneId(model::SceneId sceneId) {
+        bool SceneStorage<Cls>::setSceneId(model::SceneId sceneId) {
             m_models.clear(true);
             m_cachedAccessors.clear(true);
             m_modelStates.clear(true);
@@ -145,7 +145,7 @@ namespace r3 {
                 if (results.size() != 1) {
                     Engine::Get()->log(LogCode::ecs_invalid_scene_id, sceneId);
                     m_isValid = false;
-                    return;
+                    return false;
                 }
             }
             else {
@@ -153,7 +153,7 @@ namespace r3 {
                 if (results.size() != 1) {
                     Engine::Get()->log(LogCode::ecs_no_entry_scene, sceneId);
                     m_isValid = false;
-                    return;
+                    return false;
                 }
             }
 
@@ -169,6 +169,8 @@ namespace r3 {
                 Engine::Get()->log(LogCode::ecs_scene_storage_invalid_foreign_key, m_sceneOrEntityFK->getName(), m_sceneOrEntityFK->getReference()->getTableName());
                 m_isValid = false;
             }
+
+            return m_isValid;
         }
 
         template <typename Cls>

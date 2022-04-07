@@ -6,6 +6,8 @@ struct sqlite3;
 struct sqlite3_stmt;
 
 namespace r3 {
+    class Datetime;
+
     namespace db {
         class Database;
 
@@ -163,7 +165,7 @@ namespace r3 {
                 BigIntegerField* BigInteger(const char* name, i64 Cls::*member, bool nullable = true, bool unique = false, const char* checkCond = nullptr);
                 FloatField* Float(const char* name, f32 Cls::*member, bool nullable = true, bool unique = false, const char* checkCond = nullptr);
                 StringField* String(const char* name, u32 maxLen, r3::String Cls::*member, bool nullable = true, bool unique = false, const char* checkCond = nullptr);
-                DatetimeField* Datetime(const char* name, u64 Cls::*member, bool nullable = true, bool unique = false, const char* checkCond = nullptr);
+                DatetimeField* Datetime(const char* name, Datetime Cls::*member, bool nullable = true, bool unique = false, const char* checkCond = nullptr);
                 BooleanField* Boolean(const char* name, bool Cls::*member, bool nullable = true, bool unique = false, const char* checkCond = nullptr);
 
                 template <typename T>
@@ -176,6 +178,10 @@ namespace r3 {
                 ~Database();
 
                 sqlite3* getSqlite3();
+
+                // Negative value indicates error
+                template <typename Cls>
+                i32 count(Model<Cls>* model, const String& whereClause = "", const Array<String>& joins = {}) const;
                 
                 template <typename Cls>
                 std::enable_if_t<std::is_default_constructible_v<Cls>, Array<Cls>>
@@ -196,9 +202,9 @@ namespace r3 {
                 template <typename Cls>
                 bool update(Model<Cls>* model, const Cls& row);
 
-                sqlite3_stmt* query(const String& str);
-                i32 step(sqlite3_stmt* stmt);
-                bool finalize(sqlite3_stmt* stmt);
+                sqlite3_stmt* query(const String& str) const;
+                i32 step(sqlite3_stmt* stmt) const;
+                bool finalize(sqlite3_stmt* stmt) const;
 
                 bool begin();
                 bool commit();

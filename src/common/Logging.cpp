@@ -6,6 +6,7 @@
 
 namespace r3 {
     const char* codeFormats[] = {
+        "", // all_logs
         "", // error_code_start
         "FixedAllocator has reached the maximum number of live allocations allowed. Consider increasing the value of maxLiveAllocations passed to the constructor.",
         "Allocation of %llu B failed. (%llu B x %llu)",
@@ -32,6 +33,7 @@ namespace r3 {
         "Invalid Scene id provided (%d)",
         "No Scene id specified and entry Scene does not exist",
         "Invalid parameter for SceneStorage. Specified foreign key field '%s' does not refer to either 'tblEntity' or 'tblScene'. It refers to '%s'",
+        "Entity component model for table '%s' does not have a foreign key to the Entity model. This is a fatal error.",
         "", // error_code_end
 
         "", // warning_code_start
@@ -54,11 +56,11 @@ namespace r3 {
     // ILogger
     //
 
-    ILogger::ILogger() : m_isSuppressed(false) { }
+    ILogger::ILogger() { }
     ILogger::~ILogger() { }
 
     void ILogger::log(LogCode code, ...) {
-        if (m_isSuppressed) return;
+        if (isLoggingSuppressed(code)) return;
 
         char msg[1024] = { 0 };
         va_list l;
@@ -69,12 +71,16 @@ namespace r3 {
         onMessageLogged(code, msg);
     }
 
-    void ILogger::setLogsSuppressed(bool doSuppress) {
-        m_isSuppressed = doSuppress;
+    void ILogger::setLogsSuppressed(bool doSuppress, LogCode code) {
+        m_logsSuppressed[code] = doSuppress;
     }
 
-    bool ILogger::isLoggingSuppressed() const {
-        return m_isSuppressed;
+    bool ILogger::isLoggingSuppressed(LogCode code) const {
+        if (code != LogCode::all_logs && isLoggingSuppressed(LogCode::all_logs)) return true;
+
+        auto it = m_logsSuppressed.find(code);
+        if (it == m_logsSuppressed.end()) return false;
+        return it->second;
     }
 
 
@@ -90,7 +96,7 @@ namespace r3 {
     }
 
     void ILoggerForwarding::onMessageLogged(LogCode code, const String& msg) {
-        if (!m_logger || m_isSuppressed || m_logger->m_isSuppressed) return;
+        if (!m_logger || isLoggingSuppressed(code) || m_logger->isLoggingSuppressed(code)) return;
         m_logger->onMessageLogged(code, msg);
     }
 
@@ -115,7 +121,7 @@ namespace r3 {
 
     void DefaultLogger::onMessageLogged(LogCode code, const String& msg) {
         const char* tag = "INFO";
-        if (code < LogCode::error_code_end) tag = "ERR ";
+        if (code > LogCode::error_code_start && code < LogCode::error_code_end) tag = "ERR ";
         else if (code < LogCode::warning_code_end) tag = "WARN";
 
         u32 idx = 0;

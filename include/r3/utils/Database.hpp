@@ -50,7 +50,7 @@ namespace r3 {
         }
 
         template <typename Cls>
-        DatetimeField* Model<Cls>::Datetime(const char* name, u64 Cls::*member, bool nullable, bool unique, const char* checkCond) {
+        DatetimeField* Model<Cls>::Datetime(const char* name, r3::Datetime Cls::*member, bool nullable, bool unique, const char* checkCond) {
             return DatetimeOffset(name, (u8*)&((Cls*)nullptr->*member) - (u8*)nullptr, nullable, unique, checkCond);
         }
 
@@ -70,6 +70,42 @@ namespace r3 {
         //
         // Database
         //
+
+        template <typename Cls>
+        i32 Database::count(Model<Cls>* model, const String& whereClause, const Array<String>& joins) const {
+            String q = "SELECT COUNT(*) FROM ";
+            q += model->getTableName();
+
+            u32 jidx = 0;
+            joins.each([&q, &jidx](const String& j) {
+                if (j.size() == 0) return;
+                if (jidx == 0) q += '\n';
+                q += j;
+                q += '\n';
+                jidx++;
+            });
+
+            if (whereClause.size() > 0) {
+                if (jidx == 0) q += " WHERE ";
+                else q += "WHERE ";
+                q += whereClause;
+            }
+
+            i32 rowCount = 0;
+            sqlite3_stmt* countStmt = query(q);
+            if (countStmt) {
+                if (step(countStmt) == SQLITE_ROW) {
+                    rowCount = sqlite3_column_int(countStmt, 0);
+                } else {
+                    finalize(countStmt);
+                    return -1;
+                }
+
+                finalize(countStmt);
+            }
+
+            return rowCount;
+        }
 
         template <typename Cls>
         std::enable_if_t<std::is_default_constructible_v<Cls>, Array<Cls>>

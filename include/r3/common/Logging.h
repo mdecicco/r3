@@ -1,12 +1,15 @@
 #pragma once
 #include <r3/common/Types.h>
+#include <r3/utils/robin_hood.h>
 
 namespace r3 {
     class String;
 
     enum class LogCode {
+        all_logs = 0,
+
         // begin error codes
-        error_code_start = 0,
+        error_code_start,
         max_allocations_exceeded,
         allocation_failed,
         allocation_too_large,
@@ -32,6 +35,7 @@ namespace r3 {
         ecs_invalid_scene_id,
         ecs_no_entry_scene,
         ecs_scene_storage_invalid_foreign_key,
+        ecs_component_model_no_entity_foreign_key,
         error_code_end,
 
         // begin warning codes
@@ -56,14 +60,14 @@ namespace r3 {
             virtual ~ILogger();
 
             void log(LogCode code, ...);
-            void setLogsSuppressed(bool doSuppress);
-            bool isLoggingSuppressed() const;
+            void setLogsSuppressed(bool doSuppress, LogCode code = LogCode::all_logs);
+            bool isLoggingSuppressed(LogCode code = LogCode::all_logs) const;
 
         protected:
             friend class ILoggerForwarding;
             virtual void onMessageLogged(LogCode code, const String& msg) = 0;
 
-            bool m_isSuppressed;
+            robin_hood::unordered_map<LogCode, bool> m_logsSuppressed;
     };
 
     class ILoggerForwarding : public ILogger {

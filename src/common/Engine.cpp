@@ -1,10 +1,14 @@
 #include <r3/common/Engine.h>
 #include <r3/utils/String.h>
-#include <r3/utils/Database.h>
+#include <r3/utils/Database.hpp>
 #include <r3/utils/Singleton.hpp>
 #include <r3/utils/Allocator.hpp>
 #include <r3/utils/List.hpp>
-#include <r3/models/Models.h>
+#include <r3/utils/Application.h>
+#include <r3/models/Models.hpp>
+#include <r3/models/SceneModel.h>
+#include <r3/models/EntityModel.h>
+#include <r3/models/SceneStorage.hpp>
 
 #include <gjs/gjs.h>
 #include <gjs/gjs.hpp>
@@ -26,17 +30,23 @@ namespace r3 {
         m_scriptBackend = nullptr;
         m_scriptCtx = nullptr;
         m_db = nullptr;
+        m_app = nullptr;
 
         // max page size of 16384 chars, with 1024 max live allocations per page
         String::Allocator::Create(16384, 1024);
         Mem::Create();
-        model::initializeModels();
 
         m_defaultLogger = new DefaultLogger();
         setLog(m_defaultLogger);
     }
 
+    sEngine::sEngine(IApplication* app) : sEngine() {
+        m_app = app;
+    }
+
     sEngine::~sEngine() {
+        if (m_app) delete m_app;
+
         gjs::vm_allocator* vmAlloc = nullptr;
         if (m_scriptCtx) {
             if (m_cfg.script_debug_mode) vmAlloc = ((gjs::vm_backend*)m_scriptCtx->generator())->allocator();
@@ -99,6 +109,16 @@ namespace r3 {
     }
 
     void sEngine::initializeInternal() {
+        if (!model::initializeModels()) {
+            m_doShutdown = true;
+            return;
+        }
+
+        if (m_app) {
+            addUpdateSubscriber(m_app);
+            m_app->onBoot(*m_args);
+        }
+
         m_initialized = true;
 
         if (m_cfg.script_debug_mode) {
@@ -122,15 +142,55 @@ namespace r3 {
             return;
         }
 
+        if (m_app) m_app->onScriptBind(m_scriptCtx);
+
+        m_scriptCtx->generator()->commit_bindings();
+
         model::initializeDatabase(m_db);
-        model::initializeSceneStorage(0);
+
+        i32 entryScene = m_db->count(model::SceneModel::Get(), "is_entry_point = 1");
+        if (entryScene < 0) {
+            m_doShutdown = true;
+            return;
+        }
+
+        if (entryScene) model::initializeSceneStorage(0);
 
         setUpdateFrequency(60.0f);
         enableUpdates();
+
+        i32 sessionCount = m_db->count(model::SessionModel::Get());
+        if (sessionCount < 0) {
+            m_doShutdown = true;
+            return;
+        }
+
+        m_currentSession.id = 0;
+        m_currentSession.startedOn = Datetime();
+        m_currentSession.endedOn = Datetime(nullptr);
+        if (!m_db->insert(model::SessionModel::Get(), m_currentSession, true)) {
+            m_doShutdown = true;
+            return;
+        }
+        
+        if (m_app) {
+            if (!sessionCount) m_app->onCreate(m_db);
+            m_app->afterInitialize();
+            model::persistSceneStorage();
+        }
+
+        if (!entryScene && !model::initializeSceneStorage(0)) {
+            m_doShutdown = true;
+            return;
+        }
     }
 
     const engine_config* sEngine::getCfg() const {
         return &m_cfg;
+    }
+
+    model::RawSession sEngine::getSessionInfo() const {
+        return m_currentSession;
     }
 
     Arguments* sEngine::getArgs() {
@@ -158,10 +218,14 @@ namespace r3 {
     }
 
     i32 sEngine::execute() {
-        m_doShutdown = getChildCount() == 0;
         if (m_doShutdown) return -1;
 
+        m_doShutdown = getChildCount() == 0;
+        if (m_doShutdown) return -2;
+
         model::populateSceneStorage();
+
+        if (m_app) m_app->onSceneLoaded(model::EntityModel::Storage()->getScene());
 
         Timer frameTimer;
         f32 dt = 1.0f / 60.0f;
@@ -176,7 +240,14 @@ namespace r3 {
             maybeUpdate(dt);
         }
 
+        if (m_app) m_app->beforeShutdown();
+
         model::persistSceneStorage();
+
+        m_currentSession.endedOn = Datetime();
+        if (!m_db->update(model::SessionModel::Get(), m_currentSession)) {
+            return -3;
+        }
 
         return 0;
     }

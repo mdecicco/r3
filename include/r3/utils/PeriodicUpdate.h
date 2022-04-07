@@ -7,7 +7,7 @@ namespace r3 {
     class IPeriodicUpdate {
         public:
             IPeriodicUpdate();
-            ~IPeriodicUpdate();
+            virtual ~IPeriodicUpdate();
 
             // Inverse of setUpdateInterval
             void setUpdateFrequency(f32 frequency);

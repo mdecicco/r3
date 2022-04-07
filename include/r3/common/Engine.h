@@ -6,6 +6,8 @@
 #include <r3/utils/Singleton.h>
 #include <r3/utils/PeriodicUpdate.h>
 
+#include <r3/models/SessionModel.h>
+
 namespace gjs {
     class script_context;
     class backend;
@@ -16,6 +18,8 @@ namespace r3 {
         class Database;
     };
 
+    class IApplication;
+
     class sEngine : public ILoggerForwarding, private IPeriodicUpdate {
         public:
             void init();
@@ -24,6 +28,7 @@ namespace r3 {
 
             /* Accessors */
             const engine_config* getCfg() const;
+            model::RawSession getSessionInfo() const;
             Arguments* getArgs();
             db::Database* getDb();
 
@@ -42,6 +47,7 @@ namespace r3 {
         private:
             friend class Singleton<sEngine>;
             sEngine();
+            sEngine(IApplication* app);
             ~sEngine();
             void initializeInternal();
 
@@ -53,6 +59,9 @@ namespace r3 {
             db::Database* m_db;
             gjs::script_context* m_scriptCtx;
             gjs::backend* m_scriptBackend;
+            IApplication* m_app;
+
+            model::RawSession m_currentSession;
     };
 
     typedef Singleton<sEngine> Engine;

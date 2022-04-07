@@ -4,18 +4,7 @@
 
 namespace r3 {
     namespace model {
-        void SceneModel::Init() {
-            SceneModel::Create("tblScene");
-            auto* m = SceneModel::Get();
-            m->PrimaryKey("id", &RawScene::id);
-            m->String("name", 64, &RawScene::name, false, true);
-            m->Boolean("is_entry_point", &RawScene::isEntryPoint, false, false);
-            m->IntegerOffset("width", offsetof(RawScene, dims) + offsetof(RawScene::_dims, width), false);
-            m->IntegerOffset("height", offsetof(RawScene, dims) + offsetof(RawScene::_dims, height), false);
-            m->IntegerOffset("length", offsetof(RawScene, dims) + offsetof(RawScene::_dims, length), false);
-            m->IntegerOffset("width_divs", offsetof(RawScene, divs) + offsetof(RawScene::_divs, width), false);
-            m->IntegerOffset("height_divs", offsetof(RawScene, divs) + offsetof(RawScene::_divs, height), false);
-            m->IntegerOffset("length_divs", offsetof(RawScene, divs) + offsetof(RawScene::_divs, length), false);
+        void SceneModel::initModel(db::Model<RawScene>* m) {
             m->RunOnInit(""
                 "CREATE TRIGGER IF NOT EXISTS tblScene_insert_one_entry\n"
                 "BEFORE INSERT ON tblScene FOR EACH ROW\n"
@@ -38,7 +27,6 @@ namespace r3 {
                 "   END;\n"
                 "END;\n"
             );
-            m->finalize();
         }
     };
 };

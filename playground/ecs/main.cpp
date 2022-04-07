@@ -7,6 +7,7 @@
 #include <r3/models/SceneStorage.hpp>
 #include <r3/ecs/System.hpp>
 #include <r3/ecs/Entity.h>
+#include <r3/utils/Application.h>
 
 using namespace r3;
 
@@ -19,11 +20,6 @@ class TestSys : public ecs::ISystem<model::RawNameComponent> {
         virtual ~TestSys() { }
 
         virtual void updateComponents(f32 frameDt, f32 updateDt, Array<ecs::aNameComponent>& data) {
-            auto e = ecs::createEntity();
-            e.addNameComponent();
-            e.getName()->name = String::Format("Entity %d", e.getId());
-            e.getName().markChanged();
-
             data.each([](ecs::aNameComponent& nc) {
                 printf("Entity(%d): '%s'\n", nc->entityId, nc->name.c_str());
                 nc->name = String::Format("Entity %d_%lu", nc->entityId, (u32)rand());
@@ -34,38 +30,51 @@ class TestSys : public ecs::ISystem<model::RawNameComponent> {
         }
 };
 
-int main(int argc, const char** argv) {
-    Engine::Create();
-    Engine::Get()->init(Arguments(argc, argv));
+class App : public IApplication {
+    public:
+        App() {
+            m_test = new TestSys();
+        }
 
-    {
-        Array<model::RawScene> scenes = Engine::Get()->getDb()->select(model::SceneModel::Get());
-        model::RawScene s;
-        if (scenes.size() == 0) {
-            s = {
+        virtual ~App() {
+            delete m_test;
+        }
+
+        virtual void onBoot(const Arguments& args) {
+            Engine::Get()->setLogsSuppressed(true, LogCode::db_query);
+            Engine::Get()->setLogsSuppressed(true, LogCode::db_begin_transaction);
+            Engine::Get()->setLogsSuppressed(true, LogCode::db_commit_transaction);
+        }
+
+        virtual void afterInitialize() {
+            Engine::Get()->addUpdateSubscriber(m_test);
+        }
+
+        virtual void onSceneLoaded(const model::RawScene& scene) {
+            auto e = ecs::createEntity();
+            e.addNameComponent();
+            e.getName()->name = String::Format("Entity %d", e.getId());
+            e.getName().markChanged();
+        }
+
+        virtual void onCreate(db::Database* freshDb) {
+            model::RawScene entryScene = {
                 0,
                 "test",
                 true,
                 { 1000, 1000, 1000 },
                 { 10, 10, 10 }
             };
-            Engine::Get()->getDb()->insert(model::SceneModel::Get(), s, true);
-
-            model::EntityStorage::Get()->setSceneId(s.id);
-            model::NameComponentStorage::Get()->setSceneId(s.id);
-            model::TransformComponentStorage::Get()->setSceneId(s.id);
-        } else {
-            model::RawScene* entry = scenes.find([](const model::RawScene& scene) { return scene.isEntryPoint; });
-            if (entry) s = *entry;
-            else return -1;
+            Engine::Get()->getDb()->insert(model::SceneModel::Get(), entryScene, true);
         }
 
-        TestSys* test = new TestSys();
-        Engine::Get()->addUpdateSubscriber(test);
-        Engine::Get()->execute();
-        delete test;
-    }
+        TestSys* m_test;
+};
 
+int main(int argc, const char** argv) {
+    Engine::Create(new App());
+    Engine::Get()->init(Arguments(argc, argv));
+    i32 result = Engine::Get()->execute();
     Engine::Destroy();
-    return 0;
+    return result;
 }

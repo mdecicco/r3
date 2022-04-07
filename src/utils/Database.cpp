@@ -307,7 +307,11 @@ namespace r3 {
                 createQuery += r3::String("    ") + f->getName() + " " + f->genCreateStr();
                 if (!f->isNullable()) createQuery += " NOT NULL";
                 if (f->isUnique()) createQuery += " UNIQUE";
-                if (f->getCheckCondition()) createQuery += r3::String(" CHECK (") + f->getCheckCondition() + ")";
+                if (f->getCheckCondition()) {
+                    if (strlen(f->getCheckCondition()) > 0) {
+                        createQuery += r3::String(" CHECK (") + f->getCheckCondition() + ")";
+                    }
+                }
             });
 
             createQuery += "\n)";
@@ -393,7 +397,11 @@ namespace r3 {
             const u8* ptr = (const u8*)src;
             switch (f->getType()) {
                 case FieldType::PrimaryKey: {
-                    return;
+                    u32 v = *(const u32*)(ptr + f->getOffset());
+                    if (v == 0) sqlite3_bind_null(stmt, index);
+                    else sqlite3_bind_int(stmt, index, v);
+
+                    break;
                 }
                 case FieldType::ForeignKey: {
                     u32 v = *(const u32*)(ptr + f->getOffset());
@@ -440,7 +448,7 @@ namespace r3 {
             }
         }
 
-        sqlite3_stmt* Database::query(const String& str) {
+        sqlite3_stmt* Database::query(const String& str) const {
             Engine::Get()->log(LogCode::db_query, str.c_str());
 
             if (!m_db) {
@@ -464,7 +472,7 @@ namespace r3 {
             return stmt;
         }
 
-        i32 Database::step(sqlite3_stmt* stmt) {
+        i32 Database::step(sqlite3_stmt* stmt) const {
             if (stmt) {
                 i32 status = sqlite3_step(stmt);
                 if (status == SQLITE_DONE || status == SQLITE_ROW) return status;
@@ -477,7 +485,7 @@ namespace r3 {
             return SQLITE_ERROR;
         }
 
-        bool Database::finalize(sqlite3_stmt* stmt) {
+        bool Database::finalize(sqlite3_stmt* stmt) const {
             if (stmt) {
                 i32 status = sqlite3_finalize(stmt);
                 if (status != SQLITE_OK) {

@@ -61,7 +61,7 @@ namespace r3 {
                 Array<ModelAccessor<Cls>>& getData();
                 const Array<Cls>& getRawData() const;
             
-                void setSceneId(model::SceneId sceneId);
+                bool setSceneId(model::SceneId sceneId);
                 void load();
                 void save();
             

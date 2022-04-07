@@ -1,6 +1,7 @@
 #include <r3/ecs/Entity.h>
 #include <r3/utils/Singleton.hpp>
 #include <r3/utils/Array.hpp>
+#include <r3/models/Models.hpp>
 #include <r3/models/SceneStorage.hpp>
 #include <r3/models/NameComponentModel.h>
 #include <r3/models/TransformComponentModel.h>
@@ -12,18 +13,18 @@ namespace r3 {
         //
 
         Entity createEntity(model::EntityId parentId) {
-            auto es = model::EntityStorage::Get();
-            return Entity(model::EntityStorage::Get()->submit({ 0, parentId, es->getSceneId() }));
+            auto es = model::EntityModel::Storage();
+            return Entity(es->submit({ 0, parentId, es->getSceneId() }));
         }
 
         Array<Entity> getEntities() {
-            return model::EntityStorage::Get()->getData().map([](const aEntity& e) { return Entity(e); });
+            return model::EntityModel::Storage()->getData().map([](const aEntity& e) { return Entity(e); });
         }
 
         Entity getEntity(model::EntityId id) {
             if (id == 0) return Entity();
 
-            auto e = model::EntityStorage::Get()->getModelForEntity(id);
+            auto e = model::EntityModel::Storage()->getModelForEntity(id);
 
             if (e) return Entity(e);
             return Entity();
@@ -33,7 +34,7 @@ namespace r3 {
             Array<Entity> out;
             if (of == 0) return out;
 
-            model::EntityStorage::Get()->getData().each([&out, of](auto& e) {
+            model::EntityModel::Storage()->getData().each([&out, of](auto& e) {
                 if (e->parentId == of) {
                     out.emplace(e);
                 }
@@ -90,7 +91,7 @@ namespace r3 {
 
         aTransformComponent Entity::addTransformComponent() {
             if (!m_self) return aTransformComponent();
-            auto tcs = model::TransformComponentStorage::Get();
+            auto tcs = model::TransformComponentModel::Storage();
             auto tc = tcs->getModelForEntity(m_self->id);
             if (tc) return tc;
 
@@ -104,12 +105,12 @@ namespace r3 {
 
         aTransformComponent Entity::getTransform() const {
             if (!m_self) return aTransformComponent();
-            return model::TransformComponentStorage::Get()->getModelForEntity(m_self->id);
+            return model::TransformComponentModel::Storage()->getModelForEntity(m_self->id);
         }
 
         aNameComponent Entity::addNameComponent() {
             if (!m_self) return aNameComponent();
-            auto ncs = model::NameComponentStorage::Get();
+            auto ncs = model::NameComponentModel::Storage();
             auto nc = ncs->getModelForEntity(m_self->id);
             if (nc) return nc;
 
@@ -121,7 +122,7 @@ namespace r3 {
 
         aNameComponent Entity::getName() const {
             if (!m_self) return aNameComponent();
-            return model::NameComponentStorage::Get()->getModelForEntity(m_self->id);
+            return model::NameComponentModel::Storage()->getModelForEntity(m_self->id);
         }
 
         Entity::operator bool() const {

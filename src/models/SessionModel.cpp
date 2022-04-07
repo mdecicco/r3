@@ -1,4 +1,4 @@
-#include <r3/models/NameComponentModel.h>
+#include <r3/models/SessionModel.h>
 
 namespace r3 {
     namespace model {
