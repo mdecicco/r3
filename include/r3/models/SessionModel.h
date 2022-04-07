@@ -14,9 +14,9 @@ namespace r3 {
 
         class SessionModel : public ModelBase<RawSession, "tblSession", SessionModel> {
             public:
-                fPrimaryKey<RawSession, SessionModel, "tblSession", "id", &RawSession::id> id;
-                fDatetime<RawSession, SessionModel, "tblSession", "started_on", &RawSession::startedOn> startedOn;
-                fDatetime<RawSession, SessionModel, "tblSession", "ended_on", &RawSession::endedOn> endedOn;
+                PrimaryKey<"id", &RawSession::id> id;
+                Datetime<"started_on", &RawSession::startedOn> startedOn;
+                Datetime<"ended_on", &RawSession::endedOn> endedOn;
         };
     };
 };
