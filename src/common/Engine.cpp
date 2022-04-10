@@ -9,6 +9,7 @@
 #include <r3/models/SceneModel.h>
 #include <r3/models/EntityModel.h>
 #include <r3/models/SceneStorage.hpp>
+#include <r3/ecs/Entity.hpp>
 
 #include <gjs/gjs.h>
 #include <gjs/gjs.hpp>
@@ -62,6 +63,7 @@ namespace r3 {
         if (m_db) delete m_db;
         m_db = nullptr;
 
+        ecs::EntityRegistry::Destroy();
         model::destroyModels();
 
         if (m_defaultLogger) delete m_defaultLogger;
@@ -109,6 +111,8 @@ namespace r3 {
     }
 
     void sEngine::initializeInternal() {
+        ecs::EntityRegistry::Create();
+
         if (!model::initializeModels()) {
             m_doShutdown = true;
             return;

@@ -17,6 +17,8 @@
 
 namespace r3 {
     namespace model {
+        u64 __nextCompBit = 0;
+
         typedef Singleton<std::vector<PlainModelBase*>> Models;
 
         void registerModel(PlainModelBase* m) {
@@ -25,7 +27,14 @@ namespace r3 {
         }
 
         bool initializeModels() {
-            for (PlainModelBase* m : *Models::Get()) {
+            printf("Model order:\n");
+            auto& models = *Models::Get();
+            for (u32 i = 0;i < models.size();i++) {
+                printf("%d. %s\n", i + 1, models[i]->getModelBase()->getTableName());
+            }
+
+            for (u32 i = 0;i < models.size();i++) {
+                PlainModelBase* m = models[i];
                 if (!m->init()) {
                     db::ModelBase* mb = m->getModelBase();
                     Engine::Get()->log(LogCode::ecs_component_model_no_entity_foreign_key, mb->getTableName());
@@ -37,27 +46,40 @@ namespace r3 {
         }
 
         void destroyModels() {
-            for (PlainModelBase* m : *Models::Get()) m->destroy();
+            auto& models = *Models::Get();
+            for (u32 i = 0;i < models.size();i++) {
+                models[i]->destroy();
+            }
         }
 
         void initializeDatabase(db::Database* db) {
-            for (PlainModelBase* m : *Models::Get()) m->initializeDb(db);
+            auto& models = *Models::Get();
+            for (u32 i = 0;i < models.size();i++) {
+                models[i]->initializeDb(db);
+            }
         }
 
         bool initializeSceneStorage(SceneId sceneId) {
-            for (PlainModelBase* m : *Models::Get()) {
-                if (!m->initializeSceneStorage(sceneId)) return false;
+            auto& models = *Models::Get();
+            for (u32 i = 0;i < models.size();i++) {
+                if (!models[i]->initializeSceneStorage(sceneId)) return false;
             }
 
             return true;
         }
 
         void populateSceneStorage() {
-            for (PlainModelBase* m : *Models::Get()) m->populateSceneStorage();
+            auto& models = *Models::Get();
+            for (u32 i = 0;i < models.size();i++) {
+                models[i]->populateSceneStorage();
+            }
         }
 
         void persistSceneStorage() {
-            for (PlainModelBase* m : *Models::Get()) m->persistSceneStorage();
+            auto& models = *Models::Get();
+            for (u32 i = 0;i < models.size();i++) {
+                models[i]->persistSceneStorage();
+            }
         }
     };
 };

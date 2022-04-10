@@ -9,50 +9,13 @@
 namespace r3 {
     namespace ecs {
         //
-        // Helpers
-        //
-
-        Entity createEntity(model::EntityId parentId) {
-            auto es = model::EntityModel::Storage();
-            return Entity(es->submit({ 0, parentId, es->getSceneId() }));
-        }
-
-        Array<Entity> getEntities() {
-            return model::EntityModel::Storage()->getData().map([](const aEntity& e) { return Entity(e); });
-        }
-
-        Entity getEntity(model::EntityId id) {
-            if (id == 0) return Entity();
-
-            auto e = model::EntityModel::Storage()->getModelForEntity(id);
-
-            if (e) return Entity(e);
-            return Entity();
-        }
-
-        Array<Entity> getEntityChildren(model::EntityId of) {
-            Array<Entity> out;
-            if (of == 0) return out;
-
-            model::EntityModel::Storage()->getData().each([&out, of](auto& e) {
-                if (e->parentId == of) {
-                    out.emplace(e);
-                }
-            });
-
-            return out;
-        }
-
-
-
-        //
         // Entity
         //
 
-        Entity::Entity() {
+        Entity::Entity() : m_componentMask(0) {
         }
 
-        Entity::Entity(const aEntity& e) {
+        Entity::Entity(const aEntity& e) : m_componentMask(0) {
             m_self = e;
         }
 
@@ -73,60 +36,84 @@ namespace r3 {
             return m_self->sceneId;
         }
 
+        u64 Entity::getComponentMask() const{
+            return m_componentMask;
+        }
+
         Entity Entity::getParent() {
             if (!m_self || m_self->parentId == 0) return Entity();
 
-            return getEntity(m_self->parentId);
+            return EntityRegistry::GetEntity(m_self->parentId);
         }
 
         Array<Entity> Entity::getChildren() {
             if (!m_self) return {};
 
-            return getEntityChildren(m_self->id);
+            return EntityRegistry::GetChildrenOf(m_self->id);
         }
 
         model::EntityModel::Instance Entity::getRaw() const {
             return *m_self;
         }
 
-        aTransformComponent Entity::addTransformComponent() {
-            if (!m_self) return aTransformComponent();
-            auto tcs = model::TransformComponentModel::Storage();
-            auto tc = tcs->getModelForEntity(m_self->id);
-            if (tc) return tc;
-
-            model::TransformComponentModel::Instance _tc;
-            _tc.entityId = m_self->id;
-            _tc.cellIdx = 0;
-            _tc.position = _tc.scale = vec3(0, 0, 0);
-            _tc.rotation = quat();
-            return tcs->submit(_tc);
-        }
-
-        aTransformComponent Entity::getTransform() const {
-            if (!m_self) return aTransformComponent();
-            return model::TransformComponentModel::Storage()->getModelForEntity(m_self->id);
-        }
-
-        aNameComponent Entity::addNameComponent() {
-            if (!m_self) return aNameComponent();
-            auto ncs = model::NameComponentModel::Storage();
-            auto nc = ncs->getModelForEntity(m_self->id);
-            if (nc) return nc;
-
-            model::NameComponentModel::Instance _nc;
-            _nc.entityId = m_self->id;
-            _nc.name = "";
-            return ncs->submit(_nc);
-        }
-
-        aNameComponent Entity::getName() const {
-            if (!m_self) return aNameComponent();
-            return model::NameComponentModel::Storage()->getModelForEntity(m_self->id);
-        }
-
         Entity::operator bool() const {
             return m_self->id != 0;
+        }
+
+
+
+        //
+        // sEntityRegistry
+        //
+
+        void sEntityRegistry::onEntityCreated(aEntity e) {
+            m_entityIdxMap[e->id] = m_entities.size();
+            m_entities.emplace(e);
+        }
+
+        void sEntityRegistry::onComponentAdded(model::EntityId to, u64 compMask) {
+            m_entities[m_entityIdxMap[to]].m_componentMask |= compMask;
+        }
+
+        void sEntityRegistry::onComponentRemoved(model::EntityId to, u64 compMask) {
+            m_entities[m_entityIdxMap[to]].m_componentMask &= ~compMask;
+        }
+
+        //
+        // sEntityRegistry
+        //
+
+        Entity EntityRegistry::CreateEntity(model::EntityId parentId) {
+            auto es = model::EntityModel::Storage();
+            return Entity(es->submit({ 0, parentId, es->getSceneId() }));
+        }
+
+        Array<Entity> EntityRegistry::GetAll() {
+            return Get()->m_entities;
+        }
+
+        Array<Entity> EntityRegistry::GetMatching(u64 componentBitmask) {
+            return Get()->m_entities.filter([componentBitmask](const Entity& e) {
+                return (e.getComponentMask() & componentBitmask) == componentBitmask;
+            });
+        }
+
+        Entity EntityRegistry::GetEntity(model::EntityId id) {
+            if (id == 0) return Entity();
+
+            auto& map = Get()->m_entityIdxMap;
+            auto it = map.find(id);
+            if (it == map.end()) return Entity();
+
+            return Get()->m_entities[it->second];
+        }
+
+        Array<Entity> EntityRegistry::GetChildrenOf(model::EntityId of) {
+            if (of == 0) return {};
+
+            return Get()->m_entities.filter([of](const Entity& e) {
+                return e.getParentId() == of;
+            });
         }
     };
 };

@@ -2,6 +2,7 @@
 #include <r3/common/Types.h>
 #include <r3/utils/Database.h>
 #include <r3/utils/Datetime.h>
+#include <r3/utils/FixedString.h>
 #include <vector>
 
 namespace r3 {
@@ -12,24 +13,6 @@ namespace r3 {
         struct mEntity;
         struct mComponentBase;
 
-        // FixedString template struct thanks to 'user'
-        // https://stackoverflow.com/a/59495681
-
-        template <unsigned N>
-        struct FixedString {
-            char buf[N + 1]{};
-            int length = N;
-
-            constexpr FixedString(char const* string) {
-                for (unsigned index = 0;index < N;++index) {
-                    buf[index] = string[index];
-                }
-            }
-            constexpr operator char const*() const { return buf; }
-        };
-
-        template<unsigned N>
-        FixedString(char const (&)[N]) -> FixedString<N - 1>;
 
         template <typename RawModel, FixedString tableName, typename F>
         class ModelBase;
@@ -115,6 +98,7 @@ namespace r3 {
         template <typename Cls>
         class SceneStorage;
 
+
         template <typename RawModel, FixedString tableName, typename F>
         class ModelBase : public PlainModelBase, public db::Model<RawModel> {
             public:
@@ -146,6 +130,10 @@ namespace r3 {
 
                 template<typename M = RawModel>
                 static std::enable_if_t<std::is_same_v<M, RawModel> && (std::is_same_v<mEntity, M> || std::is_base_of_v<mComponentBase, M>), SceneStorage<M>*> Storage();
+                
+                template <typename M = RawModel>
+                static std::enable_if_t<std::is_same_v<M, RawModel> && std::is_base_of_v<mComponentBase, M>, u64> Bitmask();
+
 
                 virtual void initModel(db::Model<RawModel>* self);
                 virtual void destroy();
@@ -160,6 +148,7 @@ namespace r3 {
                 virtual bool init();
                 static std::vector<FieldBase<RawModel, tableName, F>*> m_fields;
                 static AutoModelRegistration<RawModel, tableName, F> m_auto_register;
+                static u64 m_compBitmask;
         };
 
         void registerModel(PlainModelBase* model);

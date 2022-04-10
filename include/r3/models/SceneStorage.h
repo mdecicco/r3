@@ -8,7 +8,8 @@
 namespace r3 {
     namespace model {
         typedef u32 EntityId;
-        struct RawEntity;
+        struct mEntity;
+        struct mComponentBase;
 
         enum class ModelAccessorState {
             clean,
@@ -51,15 +52,32 @@ namespace r3 {
         template <typename Cls>
         class SceneStorage {
             public:
-                SceneStorage(db::Model<Cls>* model, db::ForeignKeyField* sceneOrEntityFK);
+                SceneStorage(db::Model<Cls>* model, db::ForeignKeyField* sceneOrEntityFK, u64 compBitmask);
                 ~SceneStorage();
-
+                
+                template <typename T = Cls>
+                std::enable_if_t<std::is_same_v<T, Cls> && std::is_base_of_v<mComponentBase, Cls>, u64>
+                getBitmask() const;
                 model::SceneId getSceneId() const;
                 model::SceneModel::Instance getScene() const;
 
                 const Array<ModelAccessor<Cls>>& getData() const;
                 Array<ModelAccessor<Cls>>& getData();
                 const Array<Cls>& getRawData() const;
+
+                // If any elements of the returned array are modified without notifying
+                // the storage via 'setEntityState' or 'setEntityStateAtIndex'then the
+                // changes may be lost between sessions.
+                //
+                // Modification of the array itself will result in undefined behavior.
+                Array<Cls>& getMutableRawData();
+
+                // Less efficient version of 'setModelStateAtIndex'. Use only when the
+                // index of the model in the storage is not known.
+                void setModelStateForEntity(model::EntityId id, ModelAccessorState state);
+
+                // Updates the model state at the given storage index.
+                void setModelStateAtIndex(u32 idx, ModelAccessorState state);
             
                 bool setSceneId(model::SceneId sceneId);
                 void load();
@@ -86,6 +104,7 @@ namespace r3 {
                 String m_join;
                 String m_loadFilter;
                 bool m_isValid;
+                u64 m_compBitmask;
         };
     };
 };

@@ -4,6 +4,7 @@
 #include <r3/utils/Database.hpp>
 #include <r3/utils/Singleton.hpp>
 #include <r3/models/SceneModel.h>
+#include <r3/ecs/Entity.h>
 
 namespace r3 {
     namespace model {
@@ -94,12 +95,21 @@ namespace r3 {
         //
 
         template <typename Cls>
-        SceneStorage<Cls>::SceneStorage(db::Model<Cls>* model, db::ForeignKeyField* sceneOrEntityFK) : m_model(model), m_isValid(false), m_sceneOrEntityFK(sceneOrEntityFK) {
+        SceneStorage<Cls>::SceneStorage(db::Model<Cls>* model, db::ForeignKeyField* sceneOrEntityFK, u64 compBitmask)
+            : m_model(model), m_isValid(false), m_sceneOrEntityFK(sceneOrEntityFK), m_compBitmask(compBitmask)
+        {
             m_scene.id = 0;
         }
 
         template <typename Cls>
         SceneStorage<Cls>::~SceneStorage() {
+        }
+
+        template <typename Cls>
+        template <typename T>
+        std::enable_if_t<std::is_same_v<T, Cls> && std::is_base_of_v<mComponentBase, Cls>, u64>
+        SceneStorage<Cls>::getBitmask() const {
+            return m_compBitmask;
         }
 
         template <typename Cls>
@@ -125,6 +135,21 @@ namespace r3 {
         template <typename Cls>
         const Array<Cls>& SceneStorage<Cls>::getRawData() const {
             return m_models;
+        }
+
+        template <typename Cls>
+        Array<Cls>& SceneStorage<Cls>::getMutableRawData() {
+            return m_models;
+        }
+
+        template <typename Cls>
+        void SceneStorage<Cls>::setModelStateForEntity(model::EntityId id, ModelAccessorState state) {
+            m_modelStates[m_entityIdxMap[id]] = state;
+        }
+
+        template <typename Cls>
+        void SceneStorage<Cls>::setModelStateAtIndex(u32 idx, ModelAccessorState state) {
+            m_modelStates[idx] = state;
         }
 
         template <typename Cls>
@@ -186,7 +211,15 @@ namespace r3 {
             m_models.each([this](const Cls& m, u32 idx) {
                 m_modelStates.push(ModelAccessorState::clean);
                 m_cachedAccessors.emplace(idx, this);
-                m_entityIdxMap[getEntityIdFromInstance(m)] = idx;
+
+                model::EntityId eid = getEntityIdFromInstance(m);
+                m_entityIdxMap[eid] = idx;
+
+                if constexpr (model::is_entity_component<Cls>::value) {
+                    ecs::EntityRegistry::Get()->onComponentAdded(eid, m_compBitmask);
+                } else if constexpr (std::is_same_v<Cls, mEntity>) {
+                    ecs::EntityRegistry::Get()->onEntityCreated(ModelAccessor<Cls>(idx, this));
+                }
             });
         }
 
@@ -211,12 +244,12 @@ namespace r3 {
 
         template <typename Cls>
         model::EntityId SceneStorage<Cls>::getEntityIdFromInstance(const Cls& instance) const {
-            if constexpr (std::is_same_v<model::RawEntity, Cls>) {
+            if constexpr (std::is_same_v<model::mEntity, Cls>) {
                 return instance.id;
             } else if constexpr (is_entity_component<Cls>::value) {
                 return instance.entityId;
             } else {
-                static_assert("SceneStorage template argument must be either 'model::RawEntity', or a struct that derives from 'model::RawComponentBase'");
+                static_assert("SceneStorage template argument must be either 'model::mEntity', or a struct that derives from 'model::RawComponentBase'");
             }
 
             return 0;
@@ -231,7 +264,15 @@ namespace r3 {
                 m_models.emplace(inserted);
                 m_cachedAccessors.emplace(idx, this);
                 m_modelStates.push(ModelAccessorState::clean);
-                m_entityIdxMap[this->getEntityIdFromInstance(obj)] = idx;
+
+                model::EntityId eid = this->getEntityIdFromInstance(obj);
+                m_entityIdxMap[eid] = idx;
+
+                if constexpr (model::is_entity_component<Cls>::value) {
+                    ecs::EntityRegistry::Get()->onComponentAdded(eid, m_compBitmask);
+                } else if constexpr (std::is_same_v<Cls, mEntity>) {
+                    ecs::EntityRegistry::Get()->onEntityCreated(ModelAccessor<Cls>(idx, this));
+                }
 
                 return ModelAccessor<Cls>(idx, this);
             }
@@ -252,7 +293,16 @@ namespace r3 {
                     m_models.emplace(obj);
                     m_cachedAccessors.emplace(idx, this);
                     m_modelStates.push(ModelAccessorState::clean);
-                    m_entityIdxMap[this->getEntityIdFromInstance(obj)] = idx;
+
+                    model::EntityId eid = this->getEntityIdFromInstance(obj);
+                    m_entityIdxMap[eid] = idx;
+
+                    if constexpr (model::is_entity_component<Cls>::value) {
+                        ecs::EntityRegistry::Get()->onComponentAdded(eid, m_compBitmask);
+                    } else if constexpr (std::is_same_v<Cls, mEntity>) {
+                        ecs::EntityRegistry::Get()->onEntityCreated(ModelAccessor<Cls>(idx, this));
+                    }
+
                     if (doReturnSubmitted) out.emplace(idx, this);
                 });
             }

@@ -128,6 +128,7 @@ namespace r3 {
             registerModel(Singleton<F>::Get());
         }
 
+        extern u64 __nextCompBit;
 
         template <typename RawModel, FixedString tableName, typename F>
         std::vector<FieldBase<RawModel, tableName, F>*> ModelBase<RawModel, tableName, F>::m_fields = {};
@@ -136,7 +137,13 @@ namespace r3 {
         AutoModelRegistration<RawModel, tableName, F> ModelBase<RawModel, tableName, F>::m_auto_register = AutoModelRegistration<RawModel, tableName, F>();
 
         template <typename RawModel, FixedString tableName, typename F>
+        u64 ModelBase<RawModel, tableName, F>::m_compBitmask = 0;
+
+        template <typename RawModel, FixedString tableName, typename F>
         ModelBase<RawModel, tableName, F>::ModelBase() : db::Model<RawModel>(tableName) {
+            if constexpr (std::is_base_of_v<mComponentBase, RawModel>) {
+                ModelBase<RawModel, tableName, F>::m_compBitmask = 1ULL << (__nextCompBit++);
+            }
         }
 
         template <typename RawModel, FixedString tableName, typename F>
@@ -145,10 +152,17 @@ namespace r3 {
         }
 
         template <typename RawModel, FixedString tableName, typename F>
-        template<typename M>
+        template <typename M>
         static std::enable_if_t<std::is_same_v<M, RawModel> && (std::is_same_v<mEntity, M> || std::is_base_of_v<mComponentBase, M>), SceneStorage<M>*>
         ModelBase<RawModel, tableName, F>::Storage() {
             return Singleton<SceneStorage<M>>::Get();
+        }
+
+        template <typename RawModel, FixedString tableName, typename F>
+        template <typename M>
+        std::enable_if_t<std::is_same_v<M, RawModel> && std::is_base_of_v<mComponentBase, M>, u64>
+        ModelBase<RawModel, tableName, F>::Bitmask() {
+            return ModelBase<RawModel, tableName, F>::m_compBitmask;
         }
 
         template <typename RawModel, FixedString tableName, typename F>
@@ -169,7 +183,7 @@ namespace r3 {
 
                 if constexpr (std::is_same_v<RawModel, mEntity>) {
                     db::ForeignKeyField* fk = (db::ForeignKeyField*)((F*)this)->sceneId.getField();
-                    Singleton<SceneStorage<RawModel>>::Create(m, fk);
+                    Singleton<SceneStorage<RawModel>>::Create(m, fk, 0);
                 } else if constexpr(is_entity_component<RawModel>::value) {
                     db::ForeignKeyField* entityFk = nullptr;
                     // entity id won't always be the first field that's registered on the model...
@@ -185,7 +199,7 @@ namespace r3 {
                     }
 
                     if (entityFk) {
-                        Singleton<SceneStorage<RawModel>>::Create(m, entityFk);
+                        Singleton<SceneStorage<RawModel>>::Create(m, entityFk, ModelBase<RawModel, tableName, F>::Bitmask());
                     } else {
                         // Error will be reported later safely from a cpp file...
                         return false;
@@ -200,7 +214,7 @@ namespace r3 {
 
         template <typename RawModel, FixedString tableName, typename F>
         void ModelBase<RawModel, tableName, F>::destroy() {
-            if constexpr (std::is_same_v<RawModel, RawEntity> || is_entity_component<RawModel>::value) {
+            if constexpr (std::is_same_v<RawModel, mEntity> || is_entity_component<RawModel>::value) {
                 Singleton<SceneStorage<RawModel>>::Destroy();
             }
             Singleton<F>::Destroy();
@@ -218,21 +232,21 @@ namespace r3 {
 
         template <typename RawModel, FixedString tableName, typename F>
         bool ModelBase<RawModel, tableName, F>::initializeSceneStorage(SceneId sceneId) {
-            if constexpr (std::is_same_v<RawModel, RawEntity> || is_entity_component<RawModel>::value) {
+            if constexpr (std::is_same_v<RawModel, mEntity> || is_entity_component<RawModel>::value) {
                 return Storage()->setSceneId(sceneId);
             } else return true;
         }
 
         template <typename RawModel, FixedString tableName, typename F>
         void ModelBase<RawModel, tableName, F>::populateSceneStorage() {
-            if constexpr (std::is_same_v<RawModel, RawEntity> || is_entity_component<RawModel>::value) {
+            if constexpr (std::is_same_v<RawModel, mEntity> || is_entity_component<RawModel>::value) {
                 Storage()->load();
             }
         }
 
         template <typename RawModel, FixedString tableName, typename F>
         void ModelBase<RawModel, tableName, F>::persistSceneStorage() {
-            if constexpr (std::is_same_v<RawModel, RawEntity> || is_entity_component<RawModel>::value) {
+            if constexpr (std::is_same_v<RawModel, mEntity> || is_entity_component<RawModel>::value) {
                 Storage()->save();
             }
         }
